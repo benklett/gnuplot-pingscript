@@ -99,7 +99,20 @@ function runSed() {
 s/time=/time= /g
 s/^[^\[]/#&/g
 EOF
+
     sed -f ${dataDir}/sed.cfg ${sessionDataDir}/ping.txt > ${sessionDataDir}/processed.txt
+
+    grep -v '#' ${sessionDataDir}/processed.txt > ${sessionDataDir}/processed-cached.txt
+    mv ${sessionDataDir}/processed-cached.txt ${sessionDataDir}/processed.txt
+
+    if [ $(sed -n '1{p;q}' ${sessionDataDir}/processed.txt | cut -d' ' -f 10) == "ms" ]
+    then
+        cat ${sessionDataDir}/processed.txt | cut -d' ' -f 1,9 > ${sessionDataDir}/processed-cached.txt
+    else
+        cat ${sessionDataDir}/processed.txt | cut -d' ' -f 1,10 > ${sessionDataDir}/processed-cached.txt
+    fi
+    mv ${sessionDataDir}/processed-cached.txt ${sessionDataDir}/processed.txt
+
     rm ${dataDir}/sed.cfg
 }
 
@@ -124,7 +137,7 @@ set yrange [RANGEY:]
 set grid
 set terminal png size SIZEX,SIZEY
 set output "OUTPUT"
-plot "FILE" u 1:10 w dots title "Ping from FILE", "FILE" u 1:10 smooth sbezier title "Smoothed with sbezier"
+plot "FILE" u 1:2 w dots title "Ping from FILE", "FILE" u 1:2 smooth sbezier title "Smoothed with sbezier"
 EOF
 
     local rangey
