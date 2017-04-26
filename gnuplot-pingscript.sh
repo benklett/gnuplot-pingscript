@@ -1,6 +1,6 @@
 #!/bin/bash
 # GNUPlot pingscript by Benjamin Klettbach (b<dot>klettbach<at>gmail<dot>com)
-
+set -x
 dataDir="gnuplot-pingscript-data"
 
 function start() {
@@ -9,13 +9,21 @@ function start() {
     checkDeps
 
     cacheDate=$(date +%Y-%m-%d_%H-%M)
+    
+    if [ ! -d "${1}" ]
+    then
+        getAddress $1
+        createDirs
+        startPing $2 $3
+        
+        runSed
+        runGNUPlot $4 $5 $6
+    else
+        sessionDataDir="$1"
+        runSed
+        runGNUPlot $2 $3 $4
+    fi
 
-    getAddress $1
-    createDirs
-    startPing $2 $3
-
-    runSed
-    runGNUPlot $4 $5 $6
     echo "Finished."
 }
 
@@ -189,9 +197,9 @@ EOF
     sed -e "s/SIZEX/${sizex}/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
     mv ${dataDir}/edited-gnuplot.cfg ${dataDir}/gnuplot.cfg
 
-    sed -e "s/FILE/${dataDir}\/${sessionName}\/processed.txt/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
+    sed -e "s/FILE/${sessionDataDir//\//\\/}\/processed.txt/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
     mv ${dataDir}/edited-gnuplot.cfg ${dataDir}/gnuplot.cfg
-    sed -e "s/OUTPUT/${dataDir}\/${sessionName}\/out.png/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
+    sed -e "s/OUTPUT/${sessionDataDir//\//\\/}\/out.png/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
     mv ${dataDir}/edited-gnuplot.cfg ${dataDir}/gnuplot.cfg
 
     echo "Running GNUPlot ..."
