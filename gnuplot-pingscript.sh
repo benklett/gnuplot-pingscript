@@ -10,12 +10,12 @@ function start() {
 
     cacheDate=$(date +%Y-%m-%d_%H-%M)
 
-    getAddress
+    getAddress $1
     createDirs
-    startPing
+    startPing $2 $3
 
     runSed
-    runGNUPlot
+    runGNUPlot $4 $5 $6
     echo "Finished."
 }
 
@@ -41,12 +41,16 @@ function checkDeps() {
 }
 
 function getAddress() {
+    address=$1
 
-    echo "Please enter the address/IP you want to ping (Default: google.com):"
-    read address
     if [ -z "${address}" ]
     then
-        address="google.com"
+        echo "Please enter the address/IP you want to ping (Default: google.com):"
+        read address
+        if [ -z "${address}" ]
+        then
+            address="google.com"
+        fi
     fi
 
     sessionName="${address}_${cacheDate}"
@@ -64,20 +68,26 @@ function createDirs() {
 
 function startPing() {
 
-    local interval
-    echo "Please enter the interval for the ping (Default: 0.2):"
-    read interval
+    local interval=$1
     if [ -z "${interval}" ]
     then
-        interval="0.2"
+        echo "Please enter the interval for the ping (Default: 0.2):"
+        read interval
+        if [ -z "${interval}" ]
+        then
+            interval="0.2"
+        fi
     fi
 
-    local count
-    echo "Please enter the ping count (Default: 2000):"
-    read count
+    local count=$2
     if [ -z "${count}" ]
     then
-        count="2000"
+        echo "Please enter the ping count (Default: 2000):"
+        read count
+        if [ -z "${count}" ]
+        then
+            count="2000"
+        fi
     fi
 
     echo "Running ping ..."
@@ -105,7 +115,7 @@ EOF
     grep -v '#' ${sessionDataDir}/processed.txt > ${sessionDataDir}/processed-cached.txt
     mv ${sessionDataDir}/processed-cached.txt ${sessionDataDir}/processed.txt
 
-    if [ $(sed -n '1{p;q}' ${sessionDataDir}/processed.txt | cut -d' ' -f 10) == "ms" ]
+    if [ -eq $(sed -n '1{p;q}' ${sessionDataDir}/processed.txt | cut -d' ' -f 10) "ms" ]
     then
         cat ${sessionDataDir}/processed.txt | cut -d' ' -f 1,9 > ${sessionDataDir}/processed-cached.txt
     else
@@ -124,7 +134,7 @@ function runGNUPlot {
 set title "Ping History"
 set ylabel 'Ping Latency'
 set xlabel "Period of time (Date)"
-set timestamp "%Y-%m-%d %H:%M" offset 80,-2 font "Helvetica"
+set timestamp "%Y-%m-%d %H:%M" offset 80,-2 font "Open Sans"
 #set ytics autofreq 0, +50, 8000; rotate=90
 set format x "%Y-%m-%d\n%H:%M:%S"; rotate=90
 set xdata time
@@ -135,37 +145,46 @@ set timefmt "[%s]"
 set tic scale 0
 set yrange [RANGEY:]
 set grid
-set terminal png size SIZEX,SIZEY
+set terminal png noenhanced size SIZEX,SIZEY
 set output "OUTPUT"
 plot "FILE" u 1:2 w dots title "Ping from FILE", "FILE" u 1:2 smooth sbezier title "Smoothed with sbezier"
 EOF
 
-    local rangey
-    echo "Please enter where the plot should start from (Y-Axis)(Default: 0):"
-    read rangey
+    local rangey=$1
     if [ -z "${rangey}" ]
     then
-        rangey="0"
+        echo "Please enter where the plot should start from (Y-Axis)(Default: 0):"
+        read rangey
+        if [ -z "${rangey}" ]
+        then
+            rangey="0"
+        fi
     fi
     sed -e "s/RANGEY/${rangey}/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
     mv ${dataDir}/edited-gnuplot.cfg ${dataDir}/gnuplot.cfg
 
-    local sizey
-    echo "Please enter the png height (Default: 720):"
-    read sizey
+    local sizey=$2
     if [ -z "${sizey}" ]
     then
-        sizey="720"
+        echo "Please enter the png height (Default: 720):"
+        read sizey
+        if [ -z "${sizey}" ]
+        then
+            sizey="720"
+        fi
     fi
     sed -e "s/SIZEY/${sizey}/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
     mv ${dataDir}/edited-gnuplot.cfg ${dataDir}/gnuplot.cfg
 
-    local sizex
-    echo "Please enter the png width (Default: 1280):"
-    read sizex
+    local sizex=$3
     if [ -z "${sizex}" ]
     then
-        sizex="1280"
+        echo "Please enter the png width (Default: 1280):"
+        read sizex
+        if [ -z "${sizex}" ]
+        then
+            sizex="1280"
+        fi
     fi
     sed -e "s/SIZEX/${sizex}/g" ${dataDir}/gnuplot.cfg > ${dataDir}/edited-gnuplot.cfg
     mv ${dataDir}/edited-gnuplot.cfg ${dataDir}/gnuplot.cfg
@@ -181,4 +200,4 @@ EOF
     rm ${dataDir}/gnuplot.cfg
 }
 
-start
+start $1 $2 $3 $4 $5 $6
