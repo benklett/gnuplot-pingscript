@@ -1,6 +1,6 @@
 #!/bin/bash
 # GNUPlot pingscript by Benjamin Klettbach (b<dot>klettbach<at>gmail<dot>com)
-set -x
+
 dataDir="gnuplot-pingscript-data"
 
 function start() {
